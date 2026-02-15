@@ -4,6 +4,8 @@ require_once '../../config/functions.php';
 require_once '../../includes/activity-logger.php';
 requireLogin();
 
+$currentRole = $_SESSION['role']; // Added this line for role conditioning (Copied from user-create.php)
+
 $userId = $_GET['user_id'] ?? 0;
 $message = '';
 $success = false;
@@ -17,55 +19,54 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = $_POST['email'] ?? '';
     $password = $_POST['password'] ?? '';
     $role = $_POST['role'] ?? '';
-    
+
     $updates = [];
     $params = [];
     $changes = []; // Track what changed for logging
-    
+
     if ($email && $email !== $user['email']) {
         $updates[] = "email = ?";
         $params[] = $email;
         $changes[] = 'email';
     }
-    
+
     if ($password) {
         $updates[] = "password = ?";
         $params[] = password_hash($password, PASSWORD_DEFAULT);
         $changes[] = 'password';
     }
-    
+
     if ($role && in_array($role, ['admin', 'manager', 'user']) && $role !== $user['role']) {
         $updates[] = "role = ?";
         $params[] = $role;
         $changes[] = 'role';
     }
-    
+
     if (!empty($updates)) {
         $params[] = $userId;
         $sql = "UPDATE users SET " . implode(', ', $updates) . " WHERE id = ?";
-        
+
         try {
             $stmt = $pdo->prepare($sql);
             $stmt->execute($params);
-            
+
             $message = "User updated successfully!";
             $success = true;
-            
+
             // Log the update action by the admin/manager
             logActivity($pdo, $_SESSION['user_id'], $_SESSION['email'], 'user_updated', 'success');
-            
+
             // Log the change for the affected user
             $changesStr = implode(', ', $changes);
             logActivity($pdo, $userId, $user['email'], 'profile_updated', 'success');
-            
+
             // Refresh user data
             $stmt = $pdo->prepare("SELECT * FROM users WHERE id = ?");
             $stmt->execute([$userId]);
             $user = $stmt->fetch(PDO::FETCH_ASSOC);
-            
-        } catch(PDOException $e) {
+        } catch (PDOException $e) {
             $message = "Error updating user: " . $e->getMessage();
-            
+
             // Log failed update
             logActivity($pdo, $_SESSION['user_id'], $_SESSION['email'], 'user_updated', 'failed');
         }
@@ -94,21 +95,36 @@ renderHeader('Update User');
             <label for="email">Email:</label>
             <input type="email" id="email" name="email" value="<?php echo htmlspecialchars($user['email']); ?>">
         </div>
-        
+
         <div class="form-group">
             <label for="password">Password (leave empty to keep current):</label>
             <input type="password" id="password" name="password">
         </div>
-        
+
         <div class="form-group">
             <label for="role">Role:</label>
             <select id="role" name="role">
-                <option value="user" <?php echo $user['role'] === 'user' ? 'selected' : ''; ?>>User</option>
-                <option value="manager" <?php echo $user['role'] === 'manager' ? 'selected' : ''; ?>>Manager</option>
-                <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+
+                <!-- Added conditional statement to have rules,
+                    Users are restricted to update roles
+                -->
+                <?php if ($currentRole === 'admin'): ?> <!-- for admin update roles -->
+                    <option value="user" <?php echo $user['role'] === 'user' ? 'selected' : ''; ?>>User</option>
+                    <option value="manager" <?php echo $user['role'] === 'manager' ? 'selected' : ''; ?>>Manager</option>
+                    <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                <?php endif; ?>
+                <?php if ($currentRole === 'manager'): ?> <!-- for manager update roles -->
+                    <option value="user" <?php echo $user['role'] === 'user' ? 'selected' : ''; ?>>User</option>
+                    <option value="manager" <?php echo $user['role'] === 'manager' ? 'selected' : ''; ?>>Manager</option>
+                    <option value="admin" <?php echo $user['role'] === 'admin' ? 'selected' : ''; ?>>Admin</option>
+                <?php endif; ?>
+                <?php if ($currentRole === 'user'): ?> <!-- for user update roles -->
+                    <option value="user" <?php echo $user['role'] === 'user' ? 'selected' : ''; ?>>User</option>
+                <?php endif; ?>
+
             </select>
         </div>
-        
+
         <button type="submit">Update User</button>
     </form>
 <?php else: ?>
