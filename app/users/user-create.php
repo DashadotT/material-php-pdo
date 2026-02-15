@@ -144,13 +144,13 @@ renderHeader($title);
 <!-- Added back button with condition to redirect based on user role -->
 <?php if ($currentRole === 'admin'): ?> <!-- for admin -->
     <div class="nav">
-        <a href="<?php echo BASE_URL; ?>/app/admin/dashboard.php">Back to Users</a>
+        <a href="<?php echo BASE_URL; ?>/app/admin/dashboard.php">Back to Dashboard</a>
     </div>
 <?php endif; ?>
 
 <?php if ($currentRole === 'manager'): ?> <!-- for manager -->
     <div class="nav">
-        <a href="<?php echo BASE_URL; ?>/app/manager/dashboard.php">Back to Users</a>
+        <a href="<?php echo BASE_URL; ?>/app/manager/dashboard.php">Back to Dashboard</a>
     </div>
 <?php endif; ?>
 <!-- end here -->
