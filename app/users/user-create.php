@@ -63,7 +63,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         // Log user creation
         logActivity($pdo, $_SESSION['user_id'], $_SESSION['email'], 'user_created', 'success');
-        
+
         // Log for the new user as well
         logActivity($pdo, $new_user_id, $email, 'account_created', 'success');
 
@@ -115,12 +115,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if (mail($email, $email_subject, $email_body, $headers)) {
                 $message = "User created successfully! Verification email sent.";
-                
+
                 // Log email sent
                 logActivity($pdo, $new_user_id, $email, 'verification_email_sent', 'success');
             } else {
                 $message = "User created successfully! Verification email failed to send.";
-                
+
                 // Log email failure
                 logActivity($pdo, $new_user_id, $email, 'verification_email_sent', 'failed');
             }
@@ -129,10 +129,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         $success = true;
-
-    } catch(PDOException $e) {
+    } catch (PDOException $e) {
         $message = "Error creating user: " . $e->getMessage();
-        
+
         // Log failed user creation
         logActivity($pdo, $_SESSION['user_id'], $_SESSION['email'], 'user_created', 'failed');
     }
@@ -141,6 +140,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $title = 'Create User';
 renderHeader($title);
 ?>
+
+<!-- Added back button with condition to redirect based on user role -->
+<?php if ($currentRole === 'admin'): ?> <!-- for admin -->
+    <div class="nav">
+        <a href="<?php echo BASE_URL; ?>/app/admin/dashboard.php">Back to Users</a>
+    </div>
+<?php endif; ?>
+
+<?php if ($currentRole === 'manager'): ?> <!-- for manager -->
+    <div class="nav">
+        <a href="<?php echo BASE_URL; ?>/app/manager/dashboard.php">Back to Users</a>
+    </div>
+<?php endif; ?>
+<!-- end here -->
 
 
 <div class="card">
@@ -176,12 +189,12 @@ renderHeader($title);
             <label for="email">Email Address:</label>
             <input type="email" id="email" name="email" required placeholder="user@example.com">
         </div>
-        
+
         <div class="form-group">
             <label for="password">Password:</label>
             <input type="password" id="password" name="password" required placeholder="Enter password">
         </div>
-        
+
         <div class="form-group">
             <label for="role">Role:</label>
             <select id="role" name="role" <?php echo $currentRole === 'manager' ? 'disabled' : ''; ?>>
@@ -196,18 +209,18 @@ renderHeader($title);
                 <small style="color: #666;">Managers can only create regular users</small>
             <?php endif; ?>
         </div>
-        
+
         <div class="form-group">
             <label style="display: flex; align-items: center; cursor: pointer;">
-                <input type="checkbox" name="send_verification_email" value="1" checked 
-                       style="width: auto; margin-right: 10px;">
+                <input type="checkbox" name="send_verification_email" value="1" checked
+                    style="width: auto; margin-right: 10px;">
                 <span>Send email verification (recommended)</span>
             </label>
             <small style="color: #666; margin-left: 30px;">
                 If unchecked, user will be verified immediately without email confirmation.
             </small>
         </div>
-        
+
         <button type="submit">
             <span class="material-icons" style="vertical-align: middle; font-size: 18px;">person_add</span>
             Create User
